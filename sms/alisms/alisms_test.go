@@ -58,10 +58,10 @@ func TestAliSms_SendSms(t *testing.T) {
 				Client: aliSms.Client,
 			},
 			args: args{
-				phoneNumber:   "17710660309",
+				phoneNumber:   "18810758768",
 				signName:      "亖堂小镇",
 				templateCode:  "SMS_99430013",
-				templateParam: "{\"code\":\"你老公叫你回来吃饭了，知道不\"}",
+				templateParam: "{\"code\":\"123456\"}",
 			},
 		},
 	}
