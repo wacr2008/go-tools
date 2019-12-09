@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // redis配置
-package redis
+package redisx
 
 import (
 	"github.com/liuchonglin/go-utils"
@@ -22,35 +22,24 @@ import (
 var redisConfig *RedisConfig
 // redis 配置
 type RedisConfig struct {
+	// 是否是集群
+	IsCluster bool `json:"isCluster" yaml:"isCluster"`
 	// 连接地址
-	Address string `json:"address" yaml:"address"`
-	// 最大空闲时间
-	MaxIdle int `json:"maxIdle" yaml:"maxIdle"`
-	// 最大存活时间
-	MaxActive int `json:"maxActive" yaml:"maxActive"`
-	// 空闲超时时间
+	Addrs []string `json:"addrs" yaml:"addrs"`
+	// 最大连接超时时间
+	MaxConnAge int `json:"maxConnAge" yaml:"maxConnAge"`
+	// 空闲超时时间（最大的空闲连接等待时间，超过此时间后，空闲连接将被关闭）
 	IdleTimeout int `json:"idleTimeout" yaml:"idleTimeout"`
 	// 密码
 	Password string `json:"password" yaml:"password"`
 }
 
-func GetRedisConfig() *RedisConfig {
-	if redisConfig == nil {
-		redisConfig = &RedisConfig{}
-		redisConfig.defaultValue()
+func (r *RedisConfig) DefaultValue() {
+	if utils.IsEmpty(r.Addrs) {
+		r.Addrs = append(r.Addrs, "127.0.0.1:6379")
 	}
-	return redisConfig
-}
-
-func (r *RedisConfig) defaultValue() {
-	if utils.IsEmpty(r.Address) {
-		r.Address = "localhost:6379"
-	}
-	if r.MaxIdle == 0 {
-		r.MaxIdle = 16
-	}
-	if r.MaxActive == 0 {
-		r.MaxActive = 60
+	if r.MaxConnAge == 0 {
+		r.MaxConnAge = 240
 	}
 	if r.IdleTimeout == 0 {
 		r.IdleTimeout = 300

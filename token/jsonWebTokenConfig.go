@@ -13,8 +13,6 @@ type TokenConfig struct {
 	ExpireTime int64 `json:"expireTime" yaml:"expireTime"`
 	// 刷新过期时间
 	RefreshExpireTime int64 `json:"refreshExpireTime" yaml:"refreshExpireTime"`
-	// 忽略方法列表
-	IgnoreMethods []string `json:"ignoreMethods" yaml:"ignoreMethods"`
 }
 
 func GetTokenConfig() *TokenConfig {

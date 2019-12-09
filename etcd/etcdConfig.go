@@ -19,8 +19,6 @@ import (
 	"github.com/liuchonglin/go-utils"
 )
 
-var etcdConfig *EtcdConfig
-
 // etcd 配置
 type EtcdConfig struct {
 	// 连接地址
@@ -31,15 +29,7 @@ type EtcdConfig struct {
 	ContextTimeout int64 `json:"contextTimeout" yaml:"contextTimeout"`
 }
 
-func GetEtcdConfig() *EtcdConfig {
-	if etcdConfig == nil {
-		etcdConfig = &EtcdConfig{}
-		etcdConfig.defaultValue()
-	}
-	return etcdConfig
-}
-
-func (e *EtcdConfig) defaultValue() {
+func (e *EtcdConfig) DefaultValue() {
 	if utils.IsEmpty(e.Address) {
 		e.Address = "localhost:2379"
 	}

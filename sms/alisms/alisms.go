@@ -105,7 +105,14 @@ type MnsResponse struct {
 	BizId string `json:"biz_id"`
 }
 
-func NewAliSms() (*AliSms, error) {
+type Sms interface {
+	SendSmsCode(phoneNumber, code string) (*SendSmsResponse, bool, error)
+	SendSms(phoneNumber, signName, templateCode, templateParam string) (*SendSmsResponse, bool, error)
+	GetSmsDetails(phoneNumber, sendDate, bizId string) (*QuerySendDetailsResponse, error)
+	GetSmsDetailsList(phoneNumber, sendDate, bizId string, pageSize int, currentPage int) (*QuerySendDetailsResponse, error)
+}
+
+func NewAliSms() (Sms, error) {
 	client, err := sdk.NewClientWithAccessKey("default", accessKeyId, accessSecret)
 	if err != nil {
 		return nil, err
@@ -113,15 +120,22 @@ func NewAliSms() (*AliSms, error) {
 	return &AliSms{Client: client}, nil
 }
 
-func (a *AliSms) SendSms(phoneNumber, signName, templateCode, templateParam string) (bool, *SendSmsResponse, error) {
+func (a *AliSms) SendSmsCode(phoneNumber, code string) (*SendSmsResponse, bool, error) {
+	signName := "亖堂小镇"
+	templateCode := "SMS_99430013"
+	templateParam := "{\"code\":\"" + code + "\"}"
+	return a.SendSms(phoneNumber, signName, templateCode, templateParam)
+}
+
+func (a *AliSms) SendSms(phoneNumber, signName, templateCode, templateParam string) (*SendSmsResponse, bool, error) {
 	if utils.IsEmpty(phoneNumber) {
-		return false, nil, phoneNumberIsNilError
+		return nil, false, phoneNumberIsNilError
 	}
 	if utils.IsEmpty(signName) {
-		return false, nil, signNameIsNilError
+		return nil, false, signNameIsNilError
 	}
 	if utils.IsEmpty(templateCode) {
-		return false, nil, templateCodeIsNilError
+		return nil, false, templateCodeIsNilError
 	}
 	request := requests.NewCommonRequest()
 	// 设置请求方式
@@ -142,15 +156,15 @@ func (a *AliSms) SendSms(phoneNumber, signName, templateCode, templateParam stri
 
 	response, err := a.Client.ProcessCommonRequest(request)
 	if err != nil {
-		return false, nil, err
+		return nil, false, err
 	}
 
 	sendSmsResponse := &SendSmsResponse{}
 	if err := json.Unmarshal([]byte(response.GetHttpContentString()), sendSmsResponse); err != nil {
-		return false, nil, err
+		return nil, false, err
 	}
 
-	return response.IsSuccess(), sendSmsResponse, nil
+	return sendSmsResponse, response.IsSuccess(), nil
 }
 
 func (a *AliSms) GetSmsDetails(phoneNumber, sendDate, bizId string) (*QuerySendDetailsResponse, error) {
@@ -192,7 +206,7 @@ func (a *AliSms) GetSmsDetailsList(phoneNumber, sendDate, bizId string, pageSize
 	return querySendDetailsResponse, nil
 }
 
-func (a *AliSms) Mns() {
+func Mns() {
 	regionId := "cn-hangzhou"
 	endpoints.AddEndpointMapping(regionId, "Dybaseapi", "dybaseapi.aliyuncs.com")
 
@@ -274,6 +288,5 @@ func (a *AliSms) Mns() {
 				panic(err)
 			}
 		}
-
 	}
 }

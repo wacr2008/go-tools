@@ -20,8 +20,6 @@ import (
 	"github.com/liuchonglin/go-utils"
 )
 
-var mysqlConfig *MysqlConfig
-
 // mysql 配置
 type MysqlConfig struct {
 	// 用户名
@@ -46,17 +44,7 @@ type MysqlConfig struct {
 	ShowSql bool `json:"showSql" yaml:"showSql"`
 }
 
-func GetMysqlConfig() (*MysqlConfig, error) {
-	if mysqlConfig == nil {
-		mysqlConfig = &MysqlConfig{}
-		if err := mysqlConfig.defaultValue(); err != nil {
-			return nil, err
-		}
-	}
-	return mysqlConfig, nil
-}
-
-func (m *MysqlConfig) defaultValue() error {
+func (m *MysqlConfig) DefaultValue() error {
 	if utils.IsEmpty(m.Database) {
 		return fmt.Errorf("mysql 数据库 [ datebase ] 不能为空")
 	}

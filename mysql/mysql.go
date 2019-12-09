@@ -29,10 +29,9 @@ func NewMysqlDB(mysqlConfig *MysqlConfig) (*MysqlDB, error) {
 	if mysqlConfig == nil {
 		mysqlConfig = &MysqlConfig{}
 	}
-	if err := mysqlConfig.defaultValue(); err != nil {
+	if err := mysqlConfig.DefaultValue(); err != nil {
 		return nil, err
 	}
-	var err error
 	db, err := gorm.Open("mysql", mysqlConfig.Source)
 	if err != nil {
 		return nil, err

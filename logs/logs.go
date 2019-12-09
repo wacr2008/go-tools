@@ -20,12 +20,11 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"strconv"
 	"strings"
 	"os"
 	"github.com/liuchonglin/go-utils"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"github.com/liuchonglin/go-tools/common"
+	"github.com/liuchonglin/go-tools/commonContext"
 )
 
 const (
@@ -122,7 +121,7 @@ func (l *Logs) Debug(format string, args ...interface{}) {
 		// 注意：如果args为空，fmt.Sprintf()会格式化错误，多出 %!(EXTRA []interface {}=[]) 字符串
 		msg = fmt.Sprintf(format, args...)
 	}
-	l.logger.Debug(msg, zap.String(common.TraceIdKey, ctxValue(l.ctx, common.TraceIdKey)),
+	l.logger.Debug(msg, zap.String(commonContext.CtxKeyTraceId, commonContext.GetTraceId(l.ctx)),
 		zap.String(logTagKey, l.logTag))
 }
 
@@ -132,7 +131,7 @@ func (l *Logs) Info(format string, args ...interface{}) {
 	if len(args) != 0 {
 		msg = fmt.Sprintf(format, args...)
 	}
-	l.logger.Info(msg, zap.String(common.TraceIdKey, ctxValue(l.ctx, common.TraceIdKey)),
+	l.logger.Info(msg, zap.String(commonContext.CtxKeyTraceId, commonContext.GetTraceId(l.ctx)),
 		zap.String(logTagKey, l.logTag))
 }
 
@@ -142,7 +141,7 @@ func (l *Logs) Warn(format string, args ...interface{}) {
 	if len(args) != 0 {
 		msg = fmt.Sprintf(format, args...)
 	}
-	l.logger.Warn(msg, zap.String(common.TraceIdKey, ctxValue(l.ctx, common.TraceIdKey)),
+	l.logger.Warn(msg, zap.String(commonContext.CtxKeyTraceId, commonContext.GetTraceId(l.ctx)),
 		zap.String(logTagKey, l.logTag))
 }
 
@@ -152,7 +151,7 @@ func (l *Logs) Error(format string, args ...interface{}) {
 	if len(args) != 0 {
 		msg = fmt.Sprintf(format, args...)
 	}
-	l.logger.Error(msg, zap.String(common.TraceIdKey, ctxValue(l.ctx, common.TraceIdKey)),
+	l.logger.Error(msg, zap.String(commonContext.CtxKeyTraceId, commonContext.GetTraceId(l.ctx)),
 		zap.String(logTagKey, l.logTag))
 }
 
@@ -162,12 +161,12 @@ func (l *Logs) Fatal(format string, args ...interface{}) {
 	if len(args) != 0 {
 		msg = fmt.Sprintf(format, args...)
 	}
-	l.logger.Fatal(msg, zap.String(common.TraceIdKey, ctxValue(l.ctx, common.TraceIdKey)),
+	l.logger.Fatal(msg, zap.String(commonContext.CtxKeyTraceId, commonContext.GetTraceId(l.ctx)),
 		zap.String(logTagKey, l.logTag))
 }
 
 // 根据 key 从上下文(context)获取值
-func ctxValue(ctx context.Context, key string) string {
+/*func ctxValue(ctx context.Context, key string) string {
 	var value string
 	if ctx == nil {
 		return value
@@ -181,7 +180,7 @@ func ctxValue(ctx context.Context, key string) string {
 		value = strconv.Itoa(v)
 	}
 	return value
-}
+}*/
 
 // 把字符串转换为日志级别（数字）
 func convertLogLevel(levelStr string) zapcore.Level {

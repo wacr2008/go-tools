@@ -31,27 +31,28 @@ type etcd struct {
 }
 
 var (
+	contextTimeout       time.Duration
 	etcdClientIsNilError = errors.New("etcd client is nil")
 	keyEmptyError        = errors.New("etcd key is empty")
 	valueNotJson         = errors.New("'value' is not a json")
 )
 
 func NewEtcd(etcdConfig *EtcdConfig) (e *etcd, err error) {
-	if etcdConfig != nil {
+	if etcdConfig == nil {
 		etcdConfig = &EtcdConfig{}
 	}
-	etcdConfig.defaultValue()
-
+	etcdConfig.DefaultValue()
+	contextTimeout = time.Duration(etcdConfig.ContextTimeout) * time.Second
 	etcdClient, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{etcdConfig.Address},
-		DialTimeout: time.Duration(etcdConfig.Timeout) * time.Second,
+		DialTimeout: contextTimeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("etcd 初始化失败: %v", err)
 	}
 	//etcd超时控制, 设置ContextTimeout超时
 	ctx, cancel := context.WithTimeout(context.Background(),
-		time.Duration(GetEtcdConfig().ContextTimeout)*time.Second)
+		time.Duration(etcdConfig.ContextTimeout)*time.Second)
 	_, err = etcdClient.Get(ctx, "init_get_test_key")
 	if err != nil {
 		return nil, fmt.Errorf("etcd 初始化失败: %v", err)
@@ -82,8 +83,7 @@ func (e *etcd) Get(key string, config interface{}) error {
 // 通过key 从etcd中获取value
 func get(etcdClient *clientv3.Client, key string) (value []byte, err error) {
 	//etcd超时控制, 设置ContextTimeout超时
-	ctx, cancel := context.WithTimeout(context.Background(),
-		time.Duration(GetEtcdConfig().ContextTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	resp, err := etcdClient.Get(ctx, key)
 	//操作完毕，取消超时控制
 	cancel()
@@ -136,8 +136,7 @@ func (e *etcd) Put(key string, value string) error {
 }
 
 func put(etcdClient *clientv3.Client, key string, value string) error {
-	ctx, cancel := context.WithTimeout(context.Background(),
-		time.Duration(GetEtcdConfig().ContextTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	_, err := etcdClient.Put(ctx, key, value)
 	cancel()
 	if err != nil {
@@ -157,8 +156,7 @@ func (e *etcd) Delete(key string) error {
 }
 
 func delete(etcdClient *clientv3.Client, key string) error {
-	ctx, cancel := context.WithTimeout(context.Background(),
-		time.Duration(GetEtcdConfig().ContextTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	_, err := etcdClient.Delete(ctx, key)
 	cancel()
 	if err != nil {

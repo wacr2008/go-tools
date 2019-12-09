@@ -13,20 +13,20 @@
 // limitations under the License.
 
 // redis工具类
-package redis
+package redisx
 
-import (
-	"github.com/gomodule/redigo/redis"
-	"fmt"
-	"time"
-	"github.com/liuchonglin/go-utils"
-)
+/*type Redis interface {
+	Get(key string) (value string, err error)
+	Set(key string, value string) error
+	Del(key string) error
+	SetExpire(key string, value string, ex int) error
+}
 
-type Redis struct {
+type Client struct {
 	RedisPool *redis.Pool
 }
 
-func NewRedis(redisConfig *RedisConfig) (*Redis, error) {
+func NewRedis(redisConfig *RedisConfig) (Redis, error) {
 	if redisConfig == nil {
 		redisConfig = &RedisConfig{}
 		redisConfig.defaultValue()
@@ -53,11 +53,11 @@ func NewRedis(redisConfig *RedisConfig) (*Redis, error) {
 	if _, err := redisPool.Dial(); err != nil {
 		return nil, fmt.Errorf("redis 初始化失败: %v", err)
 	}
-	return &Redis{RedisPool: redisPool}, nil
+	return &Client{RedisPool: redisPool}, nil
 }
 
 // 获取 key 对应的 string 值
-func (r *Redis) Get(key string) (value string, err error) {
+func (r *Client) Get(key string) (value string, err error) {
 	if utils.IsEmpty(key) {
 		return "", fmt.Errorf("key 不能为空")
 	}
@@ -75,12 +75,12 @@ func (r *Redis) Get(key string) (value string, err error) {
 }
 
 // 设置 string 值
-func (r *Redis) Set(key string, value string) error {
+func (r *Client) Set(key string, value string) error {
 	return r.SetExpire(key, value, 0)
 }
 
 // 删除 key 对应的值
-func (r *Redis) Del(key string) error {
+func (r *Client) Del(key string) error {
 	if utils.IsEmpty(key) {
 		return fmt.Errorf("key 不能为空")
 	}
@@ -95,7 +95,7 @@ func (r *Redis) Del(key string) error {
 }
 
 // 设置 string 值 和 超时时间
-func (r *Redis) SetExpire(key string, value string, ex int) error {
+func (r *Client) SetExpire(key string, value string, ex int) error {
 	if utils.IsEmpty(key) || utils.IsEmpty(value) {
 		return fmt.Errorf("key or value 不能为空")
 	}
@@ -113,4 +113,4 @@ func (r *Redis) SetExpire(key string, value string, ex int) error {
 		}
 	}
 	return nil
-}
+}*/

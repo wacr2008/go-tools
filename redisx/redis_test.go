@@ -13,11 +13,11 @@
 // limitations under the License.
 
 // redis工具类
-package redis
+package redisx
 
-import (
-	"testing"
+/*import (
 	"os"
+	"testing"
 )
 
 var config = &RedisConfig{
@@ -28,7 +28,7 @@ var config = &RedisConfig{
 	Password:    "liu5522112",
 }
 
-var redisTool *Redis
+var client Redis
 
 func TestNewRedis(t *testing.T) {
 	type args struct {
@@ -124,7 +124,7 @@ func TestSet(t *testing.T) {
 			tt.mock()
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			if err := redisTool.Set(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+			if err := client.Set(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -151,7 +151,7 @@ func TestGet(t *testing.T) {
 			args:      args{key: ""},
 			wantValue: "",
 			wantErr:   true,
-		}, {
+		},{
 			name:      "key not exist",
 			args:      args{key: "name12345"},
 			wantValue: "",
@@ -160,7 +160,7 @@ func TestGet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotValue, err := redisTool.Get(tt.args.key)
+			gotValue, err := client.Get(tt.args.key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -197,7 +197,7 @@ func TestDel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := redisTool.Del(tt.args.key); (err != nil) != tt.wantErr {
+			if err := client.Del(tt.args.key); (err != nil) != tt.wantErr {
 				t.Errorf("Del() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -235,8 +235,9 @@ func TestSetExpire(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
-			if err := redisTool.SetExpire(tt.args.key, tt.args.value, tt.args.ex); (err != nil) != tt.wantErr {
+			if err := client.SetExpire(tt.args.key, tt.args.value, tt.args.ex); (err != nil) != tt.wantErr {
 				t.Errorf("SetExpire() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -245,10 +246,127 @@ func TestSetExpire(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	var err error
-	redisTool, err = NewRedis(config)
+	client, err = NewRedis(config)
 	if err != nil {
 		panic(err)
 	}
 
 	os.Exit(m.Run())
+}*/
+
+/*func TestClient_Get(t *testing.T) {
+	type fields struct {
+		RedisPool *redis.Pool
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantValue string
+		wantErr   bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Client{
+				RedisPool: tt.fields.RedisPool,
+			}
+			gotValue, err := r.Get(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Client.Get() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("Client.Get() = %v, want %v", gotValue, tt.wantValue)
+			}
+		})
+	}
 }
+
+func TestClient_Set(t *testing.T) {
+	type fields struct {
+		RedisPool *redis.Pool
+	}
+	type args struct {
+		key   string
+		value string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Client{
+				RedisPool: tt.fields.RedisPool,
+			}
+			if err := r.Set(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("Client.Set() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestClient_Del(t *testing.T) {
+	type fields struct {
+		RedisPool *redis.Pool
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Client{
+				RedisPool: tt.fields.RedisPool,
+			}
+			if err := r.Del(tt.args.key); (err != nil) != tt.wantErr {
+				t.Errorf("Client.Del() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestClient_SetExpire(t *testing.T) {
+	type fields struct {
+		RedisPool *redis.Pool
+	}
+	type args struct {
+		key   string
+		value string
+		ex    int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Client{
+				RedisPool: tt.fields.RedisPool,
+			}
+			if err := r.SetExpire(tt.args.key, tt.args.value, tt.args.ex); (err != nil) != tt.wantErr {
+				t.Errorf("Client.SetExpire() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}*/

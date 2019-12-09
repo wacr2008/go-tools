@@ -3,17 +3,15 @@ package jsonWebToken
 import (
 	"github.com/dgrijalva/jwt-go"
 	"time"
-)
-
-const (
-	logTag       = "core.token"
-	TokenKey     = "token"
-	TokenDataKey = "tokenData"
+	"crypto/rsa"
 )
 
 // JWT签名结构
-type jsonWebToken struct {
-	SigningKey []byte
+type JsonWebToken struct {
+	// 签名所需的私钥
+	PrivateKey *rsa.PrivateKey
+	// 验签所需的公钥
+	PublicKey *rsa.PublicKey
 }
 
 // 自定义载荷 必须继承 jwt.StandardClaims
@@ -22,16 +20,33 @@ type customClaims struct {
 	jwt.StandardClaims
 }
 
-func New(tokenConfig *TokenConfig) *jsonWebToken {
+func New(tokenConfig *TokenConfig, privateKey []byte, publicKey []byte) (*JsonWebToken, error) {
+	var priKey *rsa.PrivateKey
+	var err error
+	if len(privateKey) != 0 {
+		priKey, err = jwt.ParseRSAPrivateKeyFromPEM(privateKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var pubKey *rsa.PublicKey
+	if len(publicKey) != 0 {
+		pubKey, err = jwt.ParseRSAPublicKeyFromPEM(publicKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if tokenConfig == nil {
 		tokenConfig = &TokenConfig{}
 		tokenConfig.defaultValue()
 	}
-	return &jsonWebToken{}
+	return &JsonWebToken{PrivateKey: priKey, PublicKey: pubKey}, nil
 }
 
 // 创建token
-func (j *jsonWebToken) CreateToken(data map[string]interface{}) (string, error) {
+func (j *JsonWebToken) CreateToken(data map[string]interface{}) (string, error) {
 	claims := &customClaims{Data: data, StandardClaims: jwt.StandardClaims{
 		//签名生效时间
 		NotBefore: int64(time.Now().Unix() - 1000),
@@ -44,48 +59,41 @@ func (j *jsonWebToken) CreateToken(data map[string]interface{}) (string, error) 
 }
 
 //解析token
-func (j *jsonWebToken) ParseToken(tokenString string) (map[string]interface{}, error) {
+func (j *JsonWebToken) ParseToken(tokenString string) (map[string]interface{}, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &customClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return j.SigningKey, nil
+		return j.PublicKey, nil
 	})
 	if err == nil {
 		if claims, ok := token.Claims.(*customClaims); ok && token.Valid {
-			//logs.New(context.Background(), logTag).Info("解析token成功: %v,token = %v", claims, tokenString)
 			return claims.Data, nil
 		}
 	}
-	//logs.New(context.Background(), logTag).Warn("解析token错误: %v, token = %v", err, tokenString)
 	return nil, err
 }
 
 //更新Token
-func (j *jsonWebToken) RefreshToken(tokenString string) (string, error) {
+func (j *JsonWebToken) RefreshToken(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &customClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return j.SigningKey, nil
+		return j.PublicKey, nil
 	})
 	if err == nil {
 		if claims, ok := token.Claims.(*customClaims); ok && token.Valid {
-			//tempExpires := claims.ExpiresAt
-			//logs.New(context.Background(), logTag).Info("token更新前 expires = %v,token = %v", tempExpires, tokenString)
 			jwt.TimeFunc = time.Now
 			refreshExpireTime := time.Duration(GetTokenConfig().RefreshExpireTime)
 			claims.ExpiresAt = time.Now().Add(refreshExpireTime * time.Second).Unix()
-			//logs.New(context.Background(), logTag).Info("token更新后 expires = %v,token = %v", claims.ExpiresAt, tokenString)
 			return j.createToken(claims)
 		}
 	}
-	//logs.New(context.Background(), logTag).Warn("解析token错误: %v, token = %v", err, tokenString)
 	return "", err
 }
 
 // 创建token
-func (j *jsonWebToken) createToken(claims *customClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(j.SigningKey)
+func (j *JsonWebToken) createToken(claims *customClaims) (string, error) {
+	// RAS 私钥签名/公钥验签
+	token := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
+	tokenString, err := token.SignedString(j.PrivateKey)
 	if err != nil {
-		//logs.New(context.Background(), logTag).Error("创建token错误: %v, claims = %v", err, claims)
 		return "", err
 	}
-	//logs.New(context.Background(), logTag).Info("创建token成功 token = %v", tokenString)
 	return tokenString, nil
 }

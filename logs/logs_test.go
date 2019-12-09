@@ -225,8 +225,8 @@ func TestLogs_Error(t *testing.T) {
 }
 
 func Test_ctxValue(t *testing.T) {
-	ctxString := context.WithValue(context.Background(), common.TraceIdKey, "123456")
-	ctxInt := context.WithValue(context.Background(), common.TraceIdKey, 123456)
+	ctxString := context.WithValue(context.Background(), message.TraceIdKey, "123456")
+	ctxInt := context.WithValue(context.Background(), message.TraceIdKey, 123456)
 	type args struct {
 		ctx context.Context
 		key string
@@ -238,15 +238,15 @@ func Test_ctxValue(t *testing.T) {
 	}{
 		{
 			name: "ok",
-			args: args{ctx: ctxString, key: common.TraceIdKey},
+			args: args{ctx: ctxString, key: message.TraceIdKey},
 			want: "123456",
 		}, {
 			name: "ctx is nil",
-			args: args{ctx: nil, key: common.TraceIdKey},
+			args: args{ctx: nil, key: message.TraceIdKey},
 			want: "",
 		}, {
 			name: "value int",
-			args: args{ctx: ctxInt, key: common.TraceIdKey},
+			args: args{ctx: ctxInt, key: message.TraceIdKey},
 			want: "123456",
 		},
 	}

@@ -1,26 +1,42 @@
 package result
 
-import "github.com/liuchonglin/go-tools/common"
+import (
+	"google.golang.org/grpc/codes"
+	"github.com/liuchonglin/go-tools/grpcx/code"
+	"google.golang.org/grpc/status"
+)
 
 type Result struct {
-	Code    int         `json:"code"`
+	Code    codes.Code  `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 	Total   int64       `json:"total,omitempty"`
 }
 
 func NewSuccess() *Result {
-	return &Result{Code: common.SUCCESS, Message: common.SuccessMessage}
+	return &Result{Code: codes.OK, Message: code.GetMessage(codes.OK)}
 }
 
-func NewError(code int, message string) *Result {
+func NewError(code codes.Code, message string) *Result {
 	return &Result{Code: code, Message: message}
 }
 
 func NewSuccessData(data interface{}) *Result {
-	return &Result{Code: common.SUCCESS, Message: common.SuccessMessage, Data: data}
+	return &Result{Code: codes.OK, Message: code.GetMessage(codes.OK), Data: data}
 }
 
 func NewSuccessPage(data interface{}, total int64) *Result {
-	return &Result{Code: common.SUCCESS, Message: common.SuccessMessage, Data: data, Total: total}
+	return &Result{Code: codes.OK, Message: code.GetMessage(codes.OK), Data: data, Total: total}
+}
+
+func ErrorConvert(err error) (int, *Result) {
+	stu := status.Convert(err)
+	var message string
+	if stu.Code() == codes.FailedPrecondition {
+		message = stu.Message()
+	} else {
+		message = code.GetMessage(stu.Code())
+	}
+	httpStatus := code.GRPCCodeToHTTPStatus(stu.Code())
+	return httpStatus, NewError(stu.Code(), message)
 }

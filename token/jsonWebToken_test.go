@@ -1,25 +1,29 @@
 package jsonWebToken
 
 import (
-	"testing"
 	"fmt"
+	"io/ioutil"
 	"reflect"
+	"testing"
 )
 
 func TestJwt_CreateToken(t *testing.T) {
+	priKeyData, _ := ioutil.ReadFile("./rsa_private_key.pem")
+	jsonWebToken, err := New(nil, priKeyData, nil)
+	if err != nil {
+		panic(err)
+	}
 	type args struct {
 		data map[string]interface{}
 	}
 	tests := []struct {
 		name    string
-		j       *jsonWebToken
 		args    args
 		want    string
 		wantErr bool
 	}{
 		{
 			name: "ok",
-			j:    &jsonWebToken{},
 			args: args{
 				data: map[string]interface{}{"name": "admin", "phone": "13300220033", "role": "admin"},
 			},
@@ -28,7 +32,7 @@ func TestJwt_CreateToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.j.CreateToken(tt.args.data)
+			got, err := jsonWebToken.CreateToken(tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Jwt.CreateToken() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -39,26 +43,28 @@ func TestJwt_CreateToken(t *testing.T) {
 }
 
 func TestJwt_ParseToken(t *testing.T) {
-	j := &jsonWebToken{}
-	data := map[string]interface{}{"name": "admin", "phone": "13300220033", "role": "admin"}
-	token, err := j.CreateToken(data)
+	priKeyData, _ := ioutil.ReadFile("./rsa_private_key.pem")
+	pubKeyData, _ := ioutil.ReadFile("./rsa_public_key.pem")
+	jsonWebToken, err := New(nil, priKeyData, pubKeyData)
 	if err != nil {
 		panic(err)
 	}
-
+	data := map[string]interface{}{"name": "admin", "phone": "13300220033", "role": "admin"}
+	token, err := jsonWebToken.CreateToken(data)
+	if err != nil {
+		panic(err)
+	}
 	type args struct {
 		tokenString string
 	}
 	tests := []struct {
 		name    string
-		j       *jsonWebToken
 		args    args
 		want    map[string]interface{}
 		wantErr bool
 	}{
 		{
 			name: "ok",
-			j:    &jsonWebToken{},
 			args: args{
 				tokenString: token,
 			},
@@ -66,7 +72,6 @@ func TestJwt_ParseToken(t *testing.T) {
 			wantErr: false,
 		}, {
 			name: "format error",
-			j:    &jsonWebToken{},
 			args: args{
 				tokenString: token + "a",
 			},
@@ -74,9 +79,8 @@ func TestJwt_ParseToken(t *testing.T) {
 			wantErr: true,
 		}, {
 			name: "is expired",
-			j:    &jsonWebToken{},
 			args: args{
-				tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6ImFkbWluIiwicGhvbmUiOiIxMzMwMDIyMDAzMyIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTU1MTA5NTU5NSwiaXNzIjoibWFydGluIiwibmJmIjoxNTUxMDk0NTk0fQ.xFt_nOdRc_ZU4K7XoMKkPRj6XID866FUK0xYGQAa1Jw",
+				tokenString: "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJEYXRhIjp7Im5hbWUiOiJhZG1pbiIsInBob25lIjoiMTMzMDAyMjAwMzMiLCJyb2xlIjoiYWRtaW4ifSwiZXhwIjoxNTYyMDIwMTgyLCJpc3MiOiJnby10b29scyIsIm5iZiI6MTU2MjAxNTU4Mn0.jEt7Lw-pgN7MwLz1q-JGCZtD8TkJPvA83f9BJxIaR8PD7d1HcAyNxkoLf10USMWUg_tay556DrUa-zBmdl68faJR8Fp40eCYMWk46ee724ZZtly0sa6xXaqC_mwM4IUKJ9QAZVvjpqa39Yccin18k5gb-DZM7b5gTJu-UohGWaI",
 			},
 			want:    nil,
 			wantErr: true,
@@ -84,7 +88,7 @@ func TestJwt_ParseToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.j.ParseToken(tt.args.tokenString)
+			got, err := jsonWebToken.ParseToken(tt.args.tokenString)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Jwt.ParseToken() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -99,9 +103,14 @@ func TestJwt_ParseToken(t *testing.T) {
 }
 
 func TestJwt_RefreshToken(t *testing.T) {
-	j := &jsonWebToken{}
+	priKeyData, _ := ioutil.ReadFile("./rsa_private_key.pem")
+	pubKeyData, _ := ioutil.ReadFile("./rsa_public_key.pem")
+	jsonWebToken, err := New(nil, priKeyData, pubKeyData)
+	if err != nil {
+		panic(err)
+	}
 	data := map[string]interface{}{"name": "admin", "phone": "13300220033", "role": "admin"}
-	token, err := j.CreateToken(data)
+	token, err := jsonWebToken.CreateToken(data)
 	if err != nil {
 		panic(err)
 	}
@@ -111,37 +120,33 @@ func TestJwt_RefreshToken(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		j       *jsonWebToken
 		args    args
 		want    string
 		wantErr bool
 	}{
 		{
 			name: "ok",
-			j:    &jsonWebToken{},
 			args: args{
 				tokenString: token,
 			},
 			wantErr: false,
 		}, {
 			name: "format error",
-			j:    &jsonWebToken{},
 			args: args{
 				tokenString: token + "a",
 			},
 			wantErr: true,
 		}, {
 			name: "is expired",
-			j:    &jsonWebToken{},
 			args: args{
-				tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6ImFkbWluIiwicGhvbmUiOiIxMzMwMDIyMDAzMyIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTU1MTA5NTU5NSwiaXNzIjoibWFydGluIiwibmJmIjoxNTUxMDk0NTk0fQ.xFt_nOdRc_ZU4K7XoMKkPRj6XID866FUK0xYGQAa1Jw",
+				tokenString: "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJEYXRhIjp7Im5hbWUiOiJhZG1pbiIsInBob25lIjoiMTMzMDAyMjAwMzMiLCJyb2xlIjoiYWRtaW4ifSwiZXhwIjoxNTYyMDIwMTgyLCJpc3MiOiJnby10b29scyIsIm5iZiI6MTU2MjAxNTU4Mn0.jEt7Lw-pgN7MwLz1q-JGCZtD8TkJPvA83f9BJxIaR8PD7d1HcAyNxkoLf10USMWUg_tay556DrUa-zBmdl68faJR8Fp40eCYMWk46ee724ZZtly0sa6xXaqC_mwM4IUKJ9QAZVvjpqa39Yccin18k5gb-DZM7b5gTJu-UohGWaI",
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.j.RefreshToken(tt.args.tokenString)
+			got, err := jsonWebToken.RefreshToken(tt.args.tokenString)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Jwt.RefreshToken() error = %v, wantErr %v", err, tt.wantErr)
 				return
